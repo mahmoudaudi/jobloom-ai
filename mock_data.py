@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+from models import Experience, Job, Location, StudentProfile
+
+
+def get_mock_student() -> StudentProfile:
+    return StudentProfile(
+        id="1",
+        major="Computer Science",
+        fullName="Alex Student",
+        email="alex.student@university.edu",
+        appliedCount=12,
+        interviewsCount=3,
+        offersCount=1,
+        degree="Bachelor of Computer Science",
+        university="University Name",
+        yearLabel="Year 3 of 4",
+        educationPeriod="2022 - Present",
+        expectedGraduation="Expected Graduation: 2026",
+        gpa=3.8,
+        country="Saudi Arabia",
+        city="Jeddah",
+        phone="+966500000000",
+        skills=["React", "TypeScript", "Python", "Git", "UI Design"],
+        experiences=[
+            Experience(
+                title="Teaching Assistant",
+                company="University CS Department",
+                period="Sep 2024 - Present",
+                description=(
+                    "Assisted the lead professor in delivering weekly labs and "
+                    "grading assignments for CS-201."
+                ),
+            )
+        ],
+        location=Location(country="Saudi Arabia", city="Jeddah"),
+        scheduleFileName="Fall_2024_Schedule.pdf",
+        cvFileName="Alex_Student_CV.pdf",
+    )
+
+
+def get_mock_jobs() -> list[Job]:
+    return [
+        Job(
+            id="1",
+            title="Frontend Developer Intern",
+            matchPercentage=92,
+            company="TechStart Inc.",
+            salary="25",
+            location="",
+            latitude=None,
+            longitude=None,
+            description="Work on exciting web projects with modern tech stack.",
+            requirements=["React", "TypeScript", "Git"],
+            category="IT",
+            type="Remote",
+            schedule="Flexible, 15-20 hrs/week",
+            isVerified=True,
+        ),
+        Job(
+            id="2",
+            title="Campus Ambassador",
+            matchPercentage=88,
+            company="Bright Marketing",
+            salary="18",
+            location="AUB Main Gate, Bliss St, Beirut, Lebanon",
+            latitude=33.9006,
+            longitude=35.4810,
+            description="Represent our brand on campus and organize student events.",
+            requirements=["Communication", "Social Media", "Event Planning"],
+            category="Marketing",
+            type="On Campus",
+            schedule="Flexible, 10 hrs/week",
+            isVerified=True,
+        ),
+        Job(
+            id="3",
+            title="Backend Developer Intern",
+            matchPercentage=85,
+            company="DataFlow Solutions",
+            salary="28",
+            location="Hamra, Beirut, Lebanon",
+            latitude=33.8959,
+            longitude=35.4784,
+            description="Build and optimize RESTful APIs and database systems.",
+            requirements=["Node.js", "SQL", "REST APIs"],
+            category="IT",
+            type="Hybrid",
+            schedule="Mon-Fri, 20 hrs/week",
+            isVerified=True,
+        ),
+        Job(
+            id="4",
+            title="Content Writer",
+            matchPercentage=80,
+            company="Creative Studios",
+            salary="22",
+            location="",
+            latitude=None,
+            longitude=None,
+            description="Write engaging blog posts, articles, and social media content.",
+            requirements=["Writing", "SEO", "Research"],
+            category="Marketing",
+            type="Remote",
+            schedule="Flexible, 15 hrs/week",
+            isVerified=True,
+        ),
+    ]

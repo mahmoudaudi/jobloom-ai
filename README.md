@@ -6,7 +6,7 @@ Current scope:
 - Job recommendation for students
 - Applicant recommendation for companies
 - Mock data inputs + computed ranking
-- Deterministic scoring from `AI_SPEC.md`
+
 
 Structure:
 - `job_recommendation/` student-facing job ranking feature

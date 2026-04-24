@@ -7,7 +7,6 @@ Current scope:
 - Applicant recommendation for companies
 - Mock data inputs + computed ranking
 
-
 Structure:
 - `job_recommendation/` student-facing job ranking feature
 - `applicant_recommendation/` company-facing applicant ranking feature
@@ -25,14 +24,6 @@ Run the API:
 
 ```bash
 python __main__.py
-```
-
-Runtime config lives in `.env`:
-
-```env
-JOBLOOM_AI_DATA_SOURCE=mock
-JOBLOOM_AI_RANK_JOBS_PATH=/ai/rank-jobs
-JOBLOOM_AI_RANK_STUDENTS_PATH=/ai/rank-students
 ```
 
 Use `JOBLOOM_AI_DATA_SOURCE=mock` while testing with local fixtures. Later, set it to `real` so empty requests stop using fixtures and the backend must send the real `student/jobs` or `job/students` payload.

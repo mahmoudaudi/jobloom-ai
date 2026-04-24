@@ -12,7 +12,7 @@ Structure:
 - `job_recommendation/` student-facing job ranking feature
 - `applicant_recommendation/` company-facing applicant ranking feature
 - `matching/` shared student/job models and scoring formula
-- `jobloom_ai/` FastAPI app + runtime settings
+- `api_server/` FastAPI app + runtime settings
 - `.env` runtime config for host, port, endpoint paths, and mock/real mode
 
 The mock inputs here are copied from the mobile app's fake data layer

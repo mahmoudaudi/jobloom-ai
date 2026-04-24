@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from applicant_recommendation.domain.ranking import rank_students_for_job
-from jobloom_ai.settings import should_use_mock_data
+from api_server.settings import should_use_mock_data
 from .dtos import RankStudentsRequest
 from .mappers import to_job, to_student_profile
 from .ports import RankStudentsRepository

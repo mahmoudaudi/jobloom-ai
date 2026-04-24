@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from job_recommendation.application.dtos import RankJobsRequest
 from job_recommendation.application.use_cases import RankJobsUseCase
 from job_recommendation.infrastructure.mock_rank_jobs_repository import MockRankJobsRepository
-from jobloom_ai.settings import settings
+from api_server.settings import settings
 
 
 router = APIRouter()

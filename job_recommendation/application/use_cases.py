@@ -5,7 +5,7 @@ from .dtos import RankJobsRequest
 from .mappers import to_job, to_student_profile
 from .ports import RankJobsRepository
 from .presenters import build_rank_jobs_response
-from jobloom_ai.settings import should_use_mock_data
+from api_server.settings import should_use_mock_data
 
 
 class RankJobsUseCase:

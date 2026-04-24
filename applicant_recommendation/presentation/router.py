@@ -7,7 +7,7 @@ from applicant_recommendation.application.use_cases import RankStudentsUseCase
 from applicant_recommendation.infrastructure.mock_rank_students_repository import (
     MockRankStudentsRepository,
 )
-from jobloom_ai.settings import settings
+from api_server.settings import settings
 
 
 router = APIRouter()

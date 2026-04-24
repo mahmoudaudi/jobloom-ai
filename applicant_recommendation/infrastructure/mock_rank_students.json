@@ -1,0 +1,184 @@
+{
+  "job": {
+    "id": "job-frontend-1",
+    "title": "Frontend Developer Intern",
+    "description": "Build reusable web UI components with React and TypeScript, work with designers, and maintain Git-based workflows.",
+    "requirements": ["React", "TypeScript", "Git"],
+    "category": "IT",
+    "type": "On Site",
+    "company": "TechStart Inc.",
+    "salary": "25",
+    "locationText": "Jeddah, Saudi Arabia",
+    "latitude": 21.5433,
+    "longitude": 39.1728,
+    "schedule": "Flexible, 15-20 hrs/week",
+    "isVerified": true
+  },
+  "students": [
+    {
+      "id": "student-1",
+      "major": "Computer Science",
+      "fullName": "Alex Student",
+      "email": "alex.student@university.edu",
+      "degree": "Bachelor of Computer Science",
+      "university": "University Name",
+      "yearLabel": "Year 3 of 4",
+      "educationPeriod": "2022 - Present",
+      "expectedGraduation": "2026",
+      "gpa": 3.8,
+      "country": "Saudi Arabia",
+      "city": "Jeddah",
+      "phone": "+966500000000",
+      "skills": ["React", "TypeScript", "Git", "JavaScript"],
+      "experiences": [
+        {
+          "title": "Frontend Intern",
+          "company": "ABC Tech",
+          "period": "Jun 2024 - Aug 2024",
+          "description": "Built UI components in React and TypeScript using Git workflows."
+        }
+      ],
+      "location": {
+        "country": "Saudi Arabia",
+        "city": "Jeddah"
+      },
+      "scheduleFileName": "Fall_2024_Schedule.pdf",
+      "cvFileName": "Alex_Student_CV.pdf"
+    },
+    {
+      "id": "student-2",
+      "major": "Software Engineering",
+      "fullName": "Jordan Lee",
+      "email": "jordan.lee@university.edu",
+      "degree": "Bachelor of Software Engineering",
+      "university": "University Name",
+      "yearLabel": "Year 4 of 4",
+      "educationPeriod": "2021 - Present",
+      "expectedGraduation": "2025",
+      "gpa": 3.6,
+      "country": "Saudi Arabia",
+      "city": "Jeddah",
+      "skills": ["React", "Node.js", "Git", "MongoDB"],
+      "experiences": [
+        {
+          "title": "Full Stack Trainee",
+          "company": "DataFlow Solutions",
+          "period": "Jan 2025 - Apr 2025",
+          "description": "Implemented React screens and REST API integrations."
+        }
+      ],
+      "location": {
+        "country": "Saudi Arabia",
+        "city": "Jeddah"
+      }
+    },
+    {
+      "id": "student-3",
+      "major": "Information Technology",
+      "fullName": "Sara Mikhail",
+      "email": "sara.mikhail@university.edu",
+      "degree": "Bachelor of Information Technology",
+      "university": "University Name",
+      "yearLabel": "Year 3 of 4",
+      "educationPeriod": "2022 - Present",
+      "expectedGraduation": "2026",
+      "gpa": 3.7,
+      "country": "Lebanon",
+      "city": "Beirut",
+      "skills": ["Python", "Django", "SQL", "Docker"],
+      "experiences": [
+        {
+          "title": "Backend Project Assistant",
+          "company": "Campus Lab",
+          "period": "Sep 2024 - Dec 2024",
+          "description": "Built REST APIs and database queries for a student project."
+        }
+      ],
+      "location": {
+        "country": "Lebanon",
+        "city": "Beirut"
+      }
+    },
+    {
+      "id": "student-4",
+      "major": "Graphic Design",
+      "fullName": "Emily Chen",
+      "email": "emily.chen@university.edu",
+      "degree": "Bachelor of Graphic Design",
+      "university": "University Name",
+      "yearLabel": "Year 4 of 4",
+      "educationPeriod": "2021 - Present",
+      "expectedGraduation": "2025",
+      "gpa": 3.5,
+      "country": "Saudi Arabia",
+      "city": "Jeddah",
+      "skills": ["Figma", "UI Design", "Illustration", "Branding"],
+      "experiences": [
+        {
+          "title": "UI Design Intern",
+          "company": "Creative Studios",
+          "period": "May 2024 - Aug 2024",
+          "description": "Designed mobile screens and component libraries in Figma."
+        }
+      ],
+      "location": {
+        "country": "Saudi Arabia",
+        "city": "Jeddah"
+      }
+    },
+    {
+      "id": "student-5",
+      "major": "Computer Engineering",
+      "fullName": "Omar Hassan",
+      "email": "omar.hassan@university.edu",
+      "degree": "Bachelor of Computer Engineering",
+      "university": "University Name",
+      "yearLabel": "Year 3 of 4",
+      "educationPeriod": "2022 - Present",
+      "expectedGraduation": "2026",
+      "gpa": 3.4,
+      "country": "Saudi Arabia",
+      "city": "Riyadh",
+      "skills": ["Java", "Spring Boot", "Git", "MySQL"],
+      "experiences": [
+        {
+          "title": "Software Lab Assistant",
+          "company": "University Lab",
+          "period": "Sep 2024 - Present",
+          "description": "Helped students debug Java and Git assignments."
+        }
+      ],
+      "location": {
+        "country": "Saudi Arabia",
+        "city": "Riyadh"
+      }
+    },
+    {
+      "id": "student-6",
+      "major": "Data Science",
+      "fullName": "Lina Park",
+      "email": "lina.park@university.edu",
+      "degree": "Bachelor of Data Science",
+      "university": "University Name",
+      "yearLabel": "Year 4 of 4",
+      "educationPeriod": "2021 - Present",
+      "expectedGraduation": "2025",
+      "gpa": 3.9,
+      "country": "Saudi Arabia",
+      "city": "Jeddah",
+      "skills": ["Python", "TensorFlow", "SQL", "Tableau"],
+      "experiences": [
+        {
+          "title": "Data Analyst Intern",
+          "company": "Insight Co.",
+          "period": "Jun 2024 - Aug 2024",
+          "description": "Prepared dashboards and SQL reports for business users."
+        }
+      ],
+      "location": {
+        "country": "Saudi Arabia",
+        "city": "Jeddah"
+      }
+    }
+  ]
+}

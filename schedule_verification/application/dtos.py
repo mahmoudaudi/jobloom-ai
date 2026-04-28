@@ -21,6 +21,7 @@ class ScheduleDocumentPayload(BaseModel):
     semester: str = ""
     isCurrentSemester: bool = False
     courses: List[str] = Field(default_factory=list)
+    locations: List[str] = Field(default_factory=list)
 
 
 class VerifyScheduleRequest(BaseModel):

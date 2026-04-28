@@ -1,0 +1,36 @@
+{
+  "personal": {
+    "fullName": "Alex Student",
+    "email": "alex@example.com",
+    "phone": "+966500000000",
+    "country": "Saudi Arabia",
+    "city": "Jeddah"
+  },
+  "education": {
+    "degree": "Bachelor of Computer Science",
+    "majorName": "Computer Science",
+    "university": "King Abdulaziz University",
+    "yearLabel": "Year 3 of 4",
+    "educationPeriod": "2022 - 2026",
+    "expectedGraduation": "2026",
+    "gpa": 3.8
+  },
+  "skills": ["React", "TypeScript", "Git", "SQL"],
+  "experiences": [
+    {
+      "title": "Frontend Intern",
+      "company": "ABC Tech",
+      "period": "Jun 2024 - Aug 2024",
+      "description": "Built UI components in React."
+    }
+  ],
+  "confidence": {
+    "overall": 0.88,
+    "personal": 0.95,
+    "education": 0.9,
+    "skills": 0.85,
+    "experiences": 0.8
+  },
+  "rawText": "Alex Student | Frontend Intern | Computer Science",
+  "language": "en"
+}

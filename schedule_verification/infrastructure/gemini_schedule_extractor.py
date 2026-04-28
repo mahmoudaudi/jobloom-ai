@@ -54,6 +54,11 @@ class GeminiScheduleExtractor:
                 for course in extracted.get("courses", [])
                 if str(course).strip()
             ],
+            locations=[
+                str(location).strip()
+                for location in extracted.get("locations", [])
+                if str(location).strip()
+            ],
         )
 
     def classify_document(self, payload: ScheduleDocumentPayload) -> dict[str, Any]:
@@ -153,10 +158,12 @@ class GeminiScheduleExtractor:
             "\"university\": string, "
             "\"semester\": string, "
             "\"isCurrentSemester\": boolean, "
-            "\"courses\": string[]"
+            "\"courses\": string[], "
+            "\"locations\": string[]"
             "}. "
             "Set unknown strings to empty string. Do not invent missing fields. "
-            "courses should contain visible course names/codes only."
+            "courses should contain visible course codes only. "
+            "locations should contain classroom or campus location strings only."
         )
 
         try:

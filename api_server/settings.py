@@ -53,6 +53,9 @@ class Settings:
     reload: bool
     data_source: str
     health_path: str
+    parse_cv_path: str
+    refresh_profile_section_path: str
+    verify_transcript_path: str
     rank_jobs_path: str
     rank_students_path: str
     verify_schedule_path: str
@@ -74,6 +77,15 @@ settings = Settings(
     reload=_env_bool("JOBLOOM_AI_RELOAD", True),
     data_source=os.getenv("JOBLOOM_AI_DATA_SOURCE", "mock").strip().lower(),
     health_path=_env_path("JOBLOOM_AI_HEALTH_PATH", "/ai/health"),
+    parse_cv_path=_env_path("JOBLOOM_AI_PARSE_CV_PATH", "/ai/parse-cv"),
+    refresh_profile_section_path=_env_path(
+        "JOBLOOM_AI_REFRESH_PROFILE_SECTION_PATH",
+        "/ai/suggest-profile-section",
+    ),
+    verify_transcript_path=_env_path(
+        "JOBLOOM_AI_VERIFY_TRANSCRIPT_PATH",
+        "/ai/verify-transcript",
+    ),
     rank_jobs_path=_env_path("JOBLOOM_AI_RANK_JOBS_PATH", "/ai/rank-jobs"),
     rank_students_path=_env_path("JOBLOOM_AI_RANK_STUDENTS_PATH", "/ai/rank-students"),
     verify_schedule_path=_env_path(

@@ -113,7 +113,9 @@ def _university_matches(expected: ExpectedStudent, document: ScheduleDocument) -
 def verify_schedule(document: ScheduleDocument, expected: ExpectedStudent) -> ScheduleVerification:
     name_matches = _name_matches(expected, document)
     university_matches = _university_matches(expected, document)
-    courses_present = len([course for course in document.courses if course.strip()]) > 0
+    course_count = len([course for course in document.courses if course.strip()])
+    courses_present = course_count > 0
+    minimum_course_count = course_count >= 3
     supported_file_type = _has_supported_file_type(document)
     semester_is_current = _is_current_semester(document)
 
@@ -124,12 +126,22 @@ def verify_schedule(document: ScheduleDocument, expected: ExpectedStudent) -> Sc
         "universityMatchesExpected": university_matches,
         "semesterIsCurrent": semester_is_current,
         "coursesPresent": courses_present,
+        "minimumCourseCount": minimum_course_count,
+    }
+
+    required_checks = {
+        "supportedFileType": supported_file_type,
+        "documentLooksLikeSchedule": document.documentLooksLikeSchedule,
+        "nameMatchesExpected": name_matches,
+        "universityMatchesExpected": university_matches,
+        "coursesPresent": courses_present,
+        "minimumCourseCount": minimum_course_count,
     }
 
     issues = [label for label, passed in checks.items() if not passed]
     passed_count = sum(1 for passed in checks.values() if passed)
     confidence = round(passed_count / len(checks), 2)
-    is_verified = passed_count == len(checks)
+    is_verified = all(required_checks.values())
 
     return ScheduleVerification(
         isVerified=is_verified,
@@ -144,6 +156,7 @@ def verify_schedule(document: ScheduleDocument, expected: ExpectedStudent) -> Sc
             "university": document.university,
             "semester": document.semester,
             "courses": document.courses,
+            "locations": document.locations,
             "filePath": document.filePath,
             "fileUrl": document.fileUrl,
             "fileName": document.fileName,

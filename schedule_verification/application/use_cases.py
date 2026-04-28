@@ -71,6 +71,7 @@ class VerifyScheduleUseCase:
                     "university": schedule.university,
                     "semester": schedule.semester,
                     "courses": schedule.courses,
+                    "locations": schedule.locations,
                     "filePath": schedule.filePath,
                     "fileUrl": schedule.fileUrl,
                     "fileName": schedule.fileName,

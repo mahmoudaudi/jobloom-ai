@@ -54,6 +54,18 @@ def main() -> None:
         "verify-schedule data shape changed",
     )
 
+    verify_transcript = client.post("/ai/verify-transcript", json={})
+    verify_transcript_body = verify_transcript.json()
+    assert_true(verify_transcript.status_code == 200, "verify-transcript endpoint failed")
+    assert_true(
+        verify_transcript_body.get("success") is True,
+        "verify-transcript success flag missing",
+    )
+    assert_true(
+        {"isVerified", "confidence", "checks"} <= set(verify_transcript_body["data"]),
+        "verify-transcript data shape changed",
+    )
+
     real_jobs_error = client.post("/ai/rank-jobs", json={"useMockData": False})
     assert_true(real_jobs_error.status_code == 400, "rank-jobs should require real payload")
 
@@ -65,11 +77,34 @@ def main() -> None:
         real_schedule_error.status_code == 400,
         "verify-schedule should require real payload",
     )
+    real_transcript_error = client.post("/ai/verify-transcript", json={"useMockData": False})
+    assert_true(
+        real_transcript_error.status_code == 400,
+        "verify-transcript should require real payload",
+    )
+    real_cv_error = client.post("/ai/parse-cv", json={"useMockData": False})
+    assert_true(real_cv_error.status_code == 400, "parse-cv should require a file reference")
+    mock_cv_error = client.post("/ai/parse-cv", json={"useMockData": True})
+    assert_true(mock_cv_error.status_code == 400, "parse-cv should reject mock mode")
+    refresh_skills_error = client.post(
+        "/ai/suggest-profile-section",
+        json={"useMockData": True, "section": "skills"},
+    )
+    assert_true(
+        refresh_skills_error.status_code == 400,
+        "refresh-profile-section should reject mock mode",
+    )
+    bad_section_error = client.post(
+        "/ai/suggest-profile-section",
+        json={"section": "bad-section"},
+    )
+    assert_true(bad_section_error.status_code == 400, "refresh-profile-section should reject unknown section")
 
     print("AI module smoke test: PASS")
     print(f"rank-jobs first row: {rank_jobs_body['data'][0]}")
     print(f"rank-students first row: {rank_students_body['data'][0]}")
     print(f"verify-schedule data: {verify_schedule_body['data']}")
+    print(f"verify-transcript data: {verify_transcript_body['data']}")
 
 
 if __name__ == "__main__":

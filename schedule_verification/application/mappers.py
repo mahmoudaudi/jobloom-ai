@@ -26,4 +26,5 @@ def to_schedule_document(payload: ScheduleDocumentPayload) -> ScheduleDocument:
         semester=payload.semester,
         isCurrentSemester=payload.isCurrentSemester,
         courses=payload.courses,
+        locations=payload.locations,
     )

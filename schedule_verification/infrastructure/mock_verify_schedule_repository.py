@@ -26,4 +26,5 @@ class MockVerifyScheduleRepository:
             semester=raw.get("semester", ""),
             isCurrentSemester=bool(raw.get("isCurrentSemester")),
             courses=list(raw.get("courses", [])),
+            locations=list(raw.get("locations", [])),
         )

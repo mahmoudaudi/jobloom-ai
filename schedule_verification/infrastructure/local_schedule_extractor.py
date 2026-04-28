@@ -21,18 +21,30 @@ SCHEDULE_KEYWORDS = (
     "course",
     "student",
     "university",
-    "الجدول",
-    "الفصل",
-    "المقررات",
-    "المواد",
-    "الجامعة",
+    "Ø§Ù„Ø¬Ø¯ÙˆÙ„",
+    "Ø§Ù„ÙØµÙ„",
+    "Ø§Ù„Ù…Ù‚Ø±Ø±Ø§Øª",
+    "Ø§Ù„Ù…ÙˆØ§Ø¯",
+    "Ø§Ù„Ø¬Ø§Ù…Ø¹Ø©",
 )
-COURSE_LINE_PATTERN = re.compile(r"\b[A-Z]{2,}\s*[-/]?\s*\d{2,3}[A-Z]?\b")
+COURSE_CODE_ONLY_PATTERN = re.compile(r"^[A-Z]{2,}\s+\d{3}\s+[A-Z]\d{1,2}$")
+LOCATION_LINE_PATTERN = re.compile(
+    r"^[A-Za-z]+,\s*[^,]+,\s*(?:[A-Z]{1,4}\d{1,4}|TBA)$",
+    re.IGNORECASE,
+)
+NAME_BEFORE_SCHEDULE_PATTERN = re.compile(
+    r"^(?P<name>[A-Za-z]+,\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(Spring|Summer|Fall|Winter|Autumn)\s+\d{4}(?:\s*/\s*\d{4})?\s+Schedule$",
+    re.IGNORECASE,
+)
 SEMESTER_PATTERN = re.compile(
     r"\b(Spring|Summer|Fall|Winter|Autumn)\s+20\d{2}\b|\b20\d{2}\s+(Spring|Summer|Fall|Winter|Autumn)\b",
     re.IGNORECASE,
 )
-ARABIC_SEMESTER_PATTERN = re.compile(r"(20\d{2}).{0,20}(الفصل|الترم)", re.IGNORECASE)
+SPLIT_YEAR_SEMESTER_PATTERN = re.compile(
+    r"\b(Spring|Summer|Fall|Winter|Autumn)\s+(20\d{2})\s*/\s*(20\d{2})\b",
+    re.IGNORECASE,
+)
+ARABIC_SEMESTER_PATTERN = re.compile(r"(20\d{2}).{0,20}(Ø§Ù„ÙØµÙ„|Ø§Ù„ØªØ±Ù…)", re.IGNORECASE)
 
 
 class LocalScheduleExtractor:
@@ -57,6 +69,7 @@ class LocalScheduleExtractor:
             semester=extracted["semester"],
             isCurrentSemester=extracted["isCurrentSemester"],
             courses=extracted["courses"],
+            locations=extracted["locations"],
         )
 
     def classify_document(self, payload: ScheduleDocumentPayload) -> dict[str, Any]:
@@ -83,13 +96,21 @@ class CompositeScheduleExtractor:
             return primary_result
         if self._fallback is None:
             return primary_result
-        return self._fallback.extract(payload)
+        try:
+            fallback_result = self._fallback.extract(payload)
+        except Exception:
+            return primary_result
+        return fallback_result if _looks_complete(fallback_result) else primary_result
 
     def classify_document(self, payload: ScheduleDocumentPayload) -> dict[str, Any]:
         classification = self._primary.classify_document(payload)
         if classification["isSchedule"] or self._fallback is None:
             return classification
-        return self._fallback.classify_document(payload)
+        try:
+            fallback_classification = self._fallback.classify_document(payload)
+        except Exception:
+            return classification
+        return fallback_classification if fallback_classification.get("isSchedule") else classification
 
 
 def _looks_complete(payload: ScheduleDocumentPayload) -> bool:
@@ -122,8 +143,7 @@ def _extract_document_text(file_path: Path, mime_type: str) -> str:
         ocr_text = _ocr_pdf(file_path)
         return ocr_text if len(_normalize_whitespace(ocr_text)) > len(_normalize_whitespace(text)) else text
 
-    text = _ocr_image(file_path)
-    return text
+    return _ocr_image(file_path)
 
 
 def _extract_pdf_text(file_path: Path) -> str:
@@ -167,6 +187,13 @@ def _ocr_bytes(image_bytes: bytes) -> str:
         raise ValueError("pytesseract and Pillow are required for OCR schedule extraction") from exc
 
     from io import BytesIO
+    from shutil import which
+
+    tesseract_path = which("tesseract")
+    if not tesseract_path:
+        default_path = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+        if default_path.exists():
+            pytesseract.pytesseract.tesseract_cmd = str(default_path)
 
     try:
         image = Image.open(BytesIO(image_bytes))
@@ -187,6 +214,7 @@ def _extract_schedule_fields(text: str) -> dict[str, Any]:
     keyword_hits = sum(1 for keyword in SCHEDULE_KEYWORDS if keyword.lower() in lower_text)
     semester = _extract_semester(normalized_text)
     courses = _extract_courses(lines)
+    locations = _extract_locations(lines)
     university = _extract_university(lines)
     student_name = _extract_student_name(lines)
     document_looks_like_schedule = keyword_hits >= 2 and bool(semester or courses)
@@ -198,10 +226,15 @@ def _extract_schedule_fields(text: str) -> dict[str, Any]:
         "semester": semester,
         "isCurrentSemester": bool(semester),
         "courses": courses,
+        "locations": locations,
     }
 
 
 def _extract_semester(text: str) -> str:
+    split_year_match = SPLIT_YEAR_SEMESTER_PATTERN.search(text)
+    if split_year_match:
+        return f"{split_year_match.group(1).title()} {split_year_match.group(3)}"
+
     match = SEMESTER_PATTERN.search(text)
     if match:
         return match.group(0).strip()
@@ -220,7 +253,7 @@ def _extract_courses(lines: list[str]) -> list[str]:
         cleaned = _normalize_whitespace(line)
         if not cleaned:
             continue
-        if COURSE_LINE_PATTERN.search(cleaned):
+        if COURSE_CODE_ONLY_PATTERN.fullmatch(cleaned):
             normalized = cleaned.lower()
             if normalized not in seen:
                 seen.add(normalized)
@@ -228,11 +261,26 @@ def _extract_courses(lines: list[str]) -> list[str]:
     return courses[:15]
 
 
+def _extract_locations(lines: list[str]) -> list[str]:
+    locations: list[str] = []
+    seen: set[str] = set()
+    for line in lines:
+        cleaned = _normalize_whitespace(line)
+        if not cleaned:
+            continue
+        if LOCATION_LINE_PATTERN.fullmatch(cleaned):
+            normalized = cleaned.lower()
+            if normalized not in seen:
+                seen.add(normalized)
+                locations.append(cleaned)
+    return locations[:20]
+
+
 def _extract_university(lines: list[str]) -> str:
     for line in lines:
         cleaned = _normalize_whitespace(line)
         lowered = cleaned.lower()
-        if "university" in lowered or "جامعة" in cleaned:
+        if "university" in lowered or "Ø¬Ø§Ù…Ø¹Ø©" in cleaned:
             return cleaned
     return ""
 
@@ -241,10 +289,16 @@ def _extract_student_name(lines: list[str]) -> str:
     for line in lines:
         cleaned = _normalize_whitespace(line)
         lowered = cleaned.lower()
+        if match := NAME_BEFORE_SCHEDULE_PATTERN.match(cleaned):
+            return match.group("name").strip()
         if lowered.startswith("name"):
             return cleaned.split(":", 1)[-1].strip() if ":" in cleaned else cleaned
-        if "student name" in lowered or "اسم الطالب" in cleaned:
+        if "student name" in lowered or "Ø§Ø³Ù… Ø§Ù„Ø·Ø§Ù„Ø¨" in cleaned:
             return cleaned.split(":", 1)[-1].strip() if ":" in cleaned else cleaned
+    for line in reversed(lines):
+        cleaned = _normalize_whitespace(line)
+        if re.fullmatch(r"[A-Za-z]+,\s*[A-Za-z]+(?:\s+[A-Za-z]+)*", cleaned):
+            return cleaned
     return ""
 
 

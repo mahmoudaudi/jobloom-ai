@@ -22,6 +22,7 @@ class ScheduleDocument:
     semester: str = ""
     isCurrentSemester: bool = False
     courses: List[str] = field(default_factory=list)
+    locations: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

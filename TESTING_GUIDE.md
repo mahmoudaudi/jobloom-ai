@@ -31,7 +31,27 @@ Header for `POST`:
 Content-Type: application/json
 ```
 
-## 3) Mock Test
+## 3) Quick Script Checks
+
+Smoke test:
+
+```powershell
+python scripts/smoke_test.py
+```
+
+This checks:
+- health endpoint
+- job recommendation mock response shape
+- applicant recommendation mock response shape
+- real-payload mode rejects empty bodies
+
+For a direct light/medium/heavy runtime check:
+
+```powershell
+python scripts/load_profile.py
+```
+
+## 4) Mock Test
 
 The job recommendation mock fixture is stored in `job_recommendation/infrastructure/mock_rank_jobs.json`.
 
@@ -49,7 +69,7 @@ POST http://127.0.0.1:8000/ai/rank-students
 
 That endpoint reads `applicant_recommendation/infrastructure/mock_rank_students.json`.
 
-## 4) Custom Test
+## 5) Custom Test
 
 ```json
 {
@@ -87,7 +107,7 @@ That endpoint reads `applicant_recommendation/infrastructure/mock_rank_students.
 }
 ```
 
-## 5) High Score Test
+## 6) High Score Test
 
 ```json
 {
@@ -125,7 +145,7 @@ That endpoint reads `applicant_recommendation/infrastructure/mock_rank_students.
 }
 ```
 
-## 6) Applicant Recommendation Custom Test
+## 7) Applicant Recommendation Custom Test
 
 ```json
 {

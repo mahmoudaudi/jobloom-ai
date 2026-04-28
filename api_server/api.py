@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from applicant_recommendation.presentation.router import router as applicant_router
 from job_recommendation.presentation.router import router as job_router
+from schedule_verification.presentation.router import router as schedule_router
 from .settings import settings
 
 
@@ -17,3 +18,4 @@ def health() -> dict[str, bool]:
 
 app.include_router(job_router)
 app.include_router(applicant_router)
+app.include_router(schedule_router)

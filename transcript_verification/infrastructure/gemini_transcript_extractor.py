@@ -8,6 +8,9 @@ from typing import Any
 
 from api_server.settings import settings
 from transcript_verification.application.dtos import TranscriptDocumentPayload
+from transcript_verification.infrastructure.azure_transcript_extractor import (
+    build_azure_transcript_extractor,
+)
 from transcript_verification.infrastructure.local_transcript_extractor import (
     LocalTranscriptExtractor,
 )
@@ -135,7 +138,7 @@ class GeminiTranscriptExtractor:
 class CompositeTranscriptExtractor:
     def __init__(
         self,
-        primary: LocalTranscriptExtractor,
+        primary: Any,
         fallback: GeminiTranscriptExtractor | None = None,
     ) -> None:
         self._primary = primary
@@ -168,7 +171,7 @@ def build_gemini_transcript_extractor() -> GeminiTranscriptExtractor | None:
 
 def build_transcript_extractor() -> CompositeTranscriptExtractor:
     return CompositeTranscriptExtractor(
-        primary=LocalTranscriptExtractor(),
+        primary=build_azure_transcript_extractor() or LocalTranscriptExtractor(),
         fallback=build_gemini_transcript_extractor(),
     )
 

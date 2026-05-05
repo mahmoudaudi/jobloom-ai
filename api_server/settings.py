@@ -58,10 +58,11 @@ class Settings:
     verify_transcript_path: str
     rank_jobs_path: str
     rank_students_path: str
-    verify_schedule_path: str
     llm_provider: str
     gemini_api_key: str
     gemini_model: str
+    azure_document_intelligence_endpoint: str
+    azure_document_intelligence_key: str
     llm_timeout_seconds: int
     llm_temperature: float
     llm_max_output_tokens: int
@@ -88,14 +89,16 @@ settings = Settings(
     ),
     rank_jobs_path=_env_path("JOBLOOM_AI_RANK_JOBS_PATH", "/ai/rank-jobs"),
     rank_students_path=_env_path("JOBLOOM_AI_RANK_STUDENTS_PATH", "/ai/rank-students"),
-    verify_schedule_path=_env_path(
-        "JOBLOOM_AI_VERIFY_SCHEDULE_PATH",
-        "/ai/verify-schedule",
-    ),
     llm_provider=os.getenv("JOBLOOM_AI_LLM_PROVIDER", "mock").strip().lower(),
     gemini_api_key=os.getenv("GEMINI_API_KEY", "").strip()
     or os.getenv("JOBLOOM_AI_GEMINI_API_KEY", "").strip(),
     gemini_model=os.getenv("JOBLOOM_AI_GEMINI_MODEL", "gemini-2.5-flash").strip(),
+    azure_document_intelligence_endpoint=os.getenv(
+        "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT", ""
+    ).strip(),
+    azure_document_intelligence_key=os.getenv(
+        "AZURE_DOCUMENT_INTELLIGENCE_KEY", ""
+    ).strip(),
     llm_timeout_seconds=max(_env_int("JOBLOOM_AI_LLM_TIMEOUT_SECONDS", 3), 10),
     llm_temperature=float(os.getenv("JOBLOOM_AI_LLM_TEMPERATURE", "0.2")),
     llm_max_output_tokens=_env_int("JOBLOOM_AI_LLM_MAX_OUTPUT_TOKENS", 512),

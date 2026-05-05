@@ -1,0 +1,29 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\maaud\\Desktop\\ai_module']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [4728] using WatchFiles
+INFO:     Started server process [11708]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'schedule_verification\presentation\__init__.py', 'schedule_verification\__init__.py', 'schedule_verification\presentation\router.py', 'schedule_verification\domain\models.py', 'schedule_verification\application\presenters.py', 'schedule_verification\application\mappers.py', 'schedule_verification\infrastructure\__init__.py', 'schedule_verification\infrastructure\gemini_schedule_extractor.py', 'schedule_verification\infrastructure\mock_fixture.py', 'schedule_verification\domain\verification.py', 'schedule_verification\application\__init__.py', 'schedule_verification\infrastructure\mock_verify_schedule_repository.py', 'schedule_verification\domain\__init__.py', 'schedule_verification\application\dtos.py', 'schedule_verification\application\ports.py', 'schedule_verification\infrastructure\local_schedule_extractor.py', 'schedule_verification\application\use_cases.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [11708]
+INFO:     Started server process [16456]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+t__.py', 'schedule_verification\__init__.py', 'schedule_verification\presentation\__init__.py', 'schedule_verification\infrastINFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2396]
+INFO:     Started server process [18268]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+rs.py', 'schedule_verification\infrastructure\mock_verify_schedule_repository.py', 'schedule_verification\infrastructure\local_schedule_extractor.py', 'schedule_verification\application\ports.py', 'schedule_verification\presentation\router.py', 'schedule_verification\domain\models.py', 'schedule_verification\domain\__init__.py', 'schedule_verification\domain\verification.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16628]
+INFO:     Started server process [22344]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

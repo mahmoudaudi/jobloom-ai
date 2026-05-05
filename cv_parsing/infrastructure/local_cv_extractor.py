@@ -7,6 +7,7 @@ from pathlib import Path
 import fitz
 import pytesseract
 from PIL import Image
+from api_server.text_cleaning import clean_extracted_text
 
 from cv_parsing.application.dtos import ParseCvRequest
 from cv_parsing.domain.models import (
@@ -64,6 +65,10 @@ SKILL_KEYWORDS = (
 )
 CITY_COUNTRY_PATTERN = re.compile(r"([A-Za-z]+(?:\s+[A-Za-z]+)*),\s*([A-Za-z]+(?:\s+[A-Za-z]+)*)")
 EXPERIENCE_TITLE_PATTERN = re.compile(r".+,\s*.+")
+INLINE_EXPERIENCE_PATTERN = re.compile(
+    r"^(?P<title>.+?),\s*(?P<company>.+?)\s+(?P<period>(?:[A-Za-z]{3,9}\s+\d{4}\s*-\s*(?:[A-Za-z]{3,9}\s+\d{4}|Present)))$",
+    re.IGNORECASE,
+)
 HEADER_WORDS = {"skills", "award", "education", "certification", "work experience", "technical skills", "teaching & office skills"}
 EXPERIENCE_STOP_HEADERS = {"technical skills", "teaching & office skills"}
 LOCATION_BLACKLIST = {"expected", "bachelor", "science", "databases", "development", "engineering", "skills", "experience", "coursework"}
@@ -112,10 +117,12 @@ def _extract_document_text(file_path: Path) -> str:
     if file_path.suffix.lower() == ".pdf":
         text = _extract_pdf_text(file_path)
         if len(_normalize_whitespace(text)) >= 120:
-            return text
+            return clean_extracted_text(text)
         ocr_text = _ocr_pdf(file_path)
-        return ocr_text if len(_normalize_whitespace(ocr_text)) > len(_normalize_whitespace(text)) else text
-    return _ocr_image(file_path)
+        return clean_extracted_text(
+            ocr_text if len(_normalize_whitespace(ocr_text)) > len(_normalize_whitespace(text)) else text
+        )
+    return clean_extracted_text(_ocr_image(file_path))
 
 
 def _extract_pdf_text(file_path: Path) -> str:
@@ -288,6 +295,35 @@ def _extract_experiences(lines: list[str]) -> list[ExperienceInfo]:
                 index += 1
             continue
 
+        inline_match = INLINE_EXPERIENCE_PATTERN.match(title.strip())
+        if inline_match:
+            title_text = inline_match.group("title").strip()
+            company = inline_match.group("company").strip()
+            period = inline_match.group("period").strip()
+            description_parts: list[str] = []
+            cursor = index + 1
+            while cursor < len(block):
+                current = block[cursor]
+                next_current = block[cursor + 1] if cursor + 1 < len(block) else ""
+                if current.lower().strip() in EXPERIENCE_STOP_HEADERS:
+                    break
+                if _looks_like_experience_boundary(current, next_current):
+                    break
+                if current.lower() not in HEADER_WORDS:
+                    description_parts.append(current)
+                cursor += 1
+
+            experiences.append(
+                ExperienceInfo(
+                    title=title_text,
+                    company=company,
+                    period=period,
+                    description=" ".join(description_parts[:4]).strip(),
+                )
+            )
+            index = cursor
+            continue
+
         next_line = block[index + 1] if index + 1 < len(block) else ""
         previous_line = block[index - 1] if index > 0 else ""
         if not _looks_like_experience_title(title, next_line=next_line):
@@ -311,9 +347,7 @@ def _extract_experiences(lines: list[str]) -> list[ExperienceInfo]:
             next_current = block[cursor + 1] if cursor + 1 < len(block) else ""
             if current.lower().strip() in EXPERIENCE_STOP_HEADERS:
                 break
-            if cursor != index + 1 and _looks_like_experience_title(current, next_line=next_current):
-                break
-            if cursor != index + 1 and _looks_like_period_line(current) and _looks_like_experience_title(next_current, next_line=block[cursor + 2] if cursor + 2 < len(block) else ""):
+            if cursor != index + 1 and _looks_like_experience_boundary(current, next_current):
                 break
             if not period and _looks_like_period_line(current):
                 period = current
@@ -337,6 +371,16 @@ def _extract_experiences(lines: list[str]) -> list[ExperienceInfo]:
         index = cursor
 
     return [item for item in experiences if item.title]
+
+
+def _looks_like_experience_boundary(line: str, next_line: str = "") -> bool:
+    if INLINE_EXPERIENCE_PATTERN.match(line.strip()):
+        return True
+    if _looks_like_experience_title(line, next_line=next_line):
+        return True
+    if _looks_like_period_line(line) and _looks_like_experience_title(next_line, next_line=""):
+        return True
+    return False
 
 
 def _extract_section(lines: list[str], header_pattern: re.Pattern[str]) -> list[str]:

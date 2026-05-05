@@ -56,12 +56,23 @@ def verify_transcript(
     expected: ExpectedStudent,
 ) -> TranscriptVerification:
     supported_file_type = _has_supported_file_type(document)
-    name_matches = True if not expected.fullName or not document.studentName else _matches(expected.fullName, document.studentName)
-    university_matches = _matches(expected.university, document.university, threshold=0.72)
-    major_matches = True if not expected.major or not document.major else _matches(expected.major, document.major, threshold=0.72)
-    date_of_birth_matches = True if not expected.dateOfBirth or not document.dateOfBirth else _matches(expected.dateOfBirth, document.dateOfBirth, threshold=0.72)
-    academic_year_matches = True if not expected.academicYear or not document.academicYear else _year_matches(expected.academicYear, document.academicYear)
-    records_present = bool(document.gpa is not None or document.courses)
+    document_type = (document.documentType or "").strip().lower()
+    is_attestation = document_type in {"attestation", "certificate"}
+    name_matches = (
+        True
+        if not expected.fullName or not document.studentName
+        else _matches(expected.fullName, document.studentName)
+    )
+    university_present = bool(document.university.strip())
+    major_present = bool(document.major.strip() or document.degree.strip() or document.faculty.strip())
+    date_of_birth_present = bool(document.dateOfBirth.strip())
+    academic_year_present = bool(document.academicYear.strip())
+    records_present = bool(
+        document.gpa is not None
+        or document.courses
+        or document.studentNumber.strip()
+        or document.academicYear.strip()
+    )
     recent_activity_present = bool(document.lastSemester.strip())
     identity_present = bool(document.studentNumber.strip() or document.dateOfBirth.strip())
     issuer_present = bool(document.issuer.strip())
@@ -70,17 +81,21 @@ def verify_transcript(
     faculty_present = bool(document.faculty.strip())
     signature_present = document.hasSignatureMarker or document.hasDigitalSignature
     strong_proof_present = document.hasVerificationUrl or document.hasDigitalSignature
-    document_type_supported = document.documentType in {"transcript", "attestation", "certificate"} if document.documentType else document.documentLooksLikeTranscript
+    document_type_supported = (
+        document_type in {"transcript", "attestation", "certificate"}
+        if document_type
+        else document.documentLooksLikeTranscript
+    )
 
     checks = {
         "supportedFileType": supported_file_type,
         "documentLooksLikeTranscript": document.documentLooksLikeTranscript,
         "documentTypeSupported": document_type_supported,
         "nameMatchesExpected": name_matches,
-        "universityMatchesExpected": university_matches,
-        "majorMatchesExpected": major_matches,
-        "dateOfBirthMatchesExpected": date_of_birth_matches,
-        "academicYearMatchesExpected": academic_year_matches,
+        "universityPresent": university_present,
+        "majorPresent": major_present,
+        "dateOfBirthPresent": date_of_birth_present,
+        "academicYearPresent": academic_year_present,
         "recordsPresent": records_present,
         "recentAcademicActivity": recent_activity_present,
         "identitySignalPresent": identity_present,
@@ -97,15 +112,25 @@ def verify_transcript(
         "documentLooksLikeTranscript": document.documentLooksLikeTranscript,
         "documentTypeSupported": document_type_supported,
         "nameMatchesExpected": name_matches,
-        "universityMatchesExpected": university_matches,
-        "majorMatchesExpected": major_matches,
+        "universityPresent": university_present,
         "identitySignalPresent": identity_present,
     }
+
+    if is_attestation:
+        required_checks["academicYearPresent"] = academic_year_present
+        required_checks["signaturePresent"] = signature_present
+    else:
+        required_checks["recordsPresent"] = records_present
 
     issues = [label for label, passed in checks.items() if not passed]
     passed_count = sum(1 for passed in checks.values() if passed)
     confidence = round(passed_count / len(checks), 2)
-    is_verified = strong_proof_present or all(required_checks.values())
+    is_verified = all(required_checks.values()) and (
+        strong_proof_present
+        or signature_present
+        or issuer_present
+        or reference_number_present
+    )
 
     return TranscriptVerification(
         isVerified=is_verified,

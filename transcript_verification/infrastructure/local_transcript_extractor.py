@@ -5,6 +5,7 @@ import re
 from io import BytesIO
 from pathlib import Path
 
+from api_server.text_cleaning import clean_extracted_text
 from transcript_verification.application.dtos import TranscriptDocumentPayload
 
 
@@ -98,10 +99,12 @@ def _extract_document_text(file_path: Path, mime_type: str) -> str:
     if mime_type == "application/pdf":
         text = _extract_pdf_text(file_path)
         if len(_normalize_whitespace(text)) >= 100:
-            return text
+            return clean_extracted_text(text)
         ocr_text = _ocr_pdf(file_path)
-        return ocr_text if len(_normalize_whitespace(ocr_text)) > len(_normalize_whitespace(text)) else text
-    return _ocr_image(file_path)
+        return clean_extracted_text(
+            ocr_text if len(_normalize_whitespace(ocr_text)) > len(_normalize_whitespace(text)) else text
+        )
+    return clean_extracted_text(_ocr_image(file_path))
 
 
 def _extract_pdf_text(file_path: Path) -> str:
@@ -213,17 +216,25 @@ def _extract_transcript_fields(text: str) -> dict:
 
 
 def _extract_student_name(lines: list[str]) -> str:
-    for line in lines:
+    for index, line in enumerate(lines):
         lowered = line.lower()
         if lowered.startswith("name"):
             return line.split(":", 1)[-1].strip() if ":" in line else line
         if "student name" in lowered or "name of student" in lowered:
             return line.split(":", 1)[-1].strip() if ":" in line else line
         if "certifies that" in lowered:
-            tail = line.split("certifies that", 1)[-1].strip(" :")
-            tail = re.sub(r"[^A-Za-z\s]", " ", tail)
-            tail = " ".join(tail.split())
-            return tail
+            tail = re.split(r"certifies that", line, flags=re.IGNORECASE, maxsplit=1)[-1].strip(" :")
+            if tail:
+                tail = re.sub(r"[^A-Za-z\s]", " ", tail)
+                tail = " ".join(tail.split())
+                if tail:
+                    return tail
+            for candidate in lines[index + 1 : index + 4]:
+                cleaned = candidate.strip()
+                if not cleaned or ":" in cleaned:
+                    continue
+                if 2 <= len(cleaned.split()) <= 5 and not EMAIL_PATTERN.search(cleaned):
+                    return cleaned
     candidates = [line for line in lines[:10] if 2 <= len(line.split()) <= 4 and not EMAIL_PATTERN.search(line)]
     return candidates[0] if candidates else ""
 

@@ -16,6 +16,7 @@ from cv_parsing.domain.models import (
     ParsedCv,
     PersonalInfo,
 )
+from cv_parsing.infrastructure.azure_cv_extractor import build_azure_cv_extractor
 from cv_parsing.infrastructure.local_cv_extractor import LocalCvExtractor
 
 
@@ -207,7 +208,7 @@ class GeminiCvExtractor:
 
 
 class CompositeCvExtractor:
-    def __init__(self, primary: LocalCvExtractor, fallback: GeminiCvExtractor | None = None) -> None:
+    def __init__(self, primary: Any, fallback: GeminiCvExtractor | None = None) -> None:
         self._primary = primary
         self._fallback = fallback
 
@@ -235,7 +236,7 @@ def build_gemini_cv_extractor() -> GeminiCvExtractor | None:
 
 def build_cv_extractor() -> CompositeCvExtractor:
     return CompositeCvExtractor(
-        primary=LocalCvExtractor(),
+        primary=build_azure_cv_extractor() or LocalCvExtractor(),
         fallback=build_gemini_cv_extractor(),
     )
 

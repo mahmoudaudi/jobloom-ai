@@ -2,7 +2,9 @@
   "expected": {
     "fullName": "Alex Student",
     "university": "King Abdulaziz University",
-    "major": "Computer Science"
+    "major": "Computer Science",
+    "dateOfBirth": "",
+    "academicYear": "2025/2026"
   },
   "transcript": {
     "filePath": "/uploads/transcripts/Fall_2025_Transcript.pdf",
@@ -10,18 +12,27 @@
     "fileName": "Fall_2025_Transcript.pdf",
     "mimeType": "application/pdf",
     "documentLooksLikeTranscript": true,
+    "documentType": "transcript",
     "studentName": "Alex Student",
     "university": "King Abdulaziz University",
     "degree": "Bachelor of Computer Science",
     "major": "Computer Science",
     "gpa": 3.8,
     "lastSemester": "Fall 2025",
+    "academicYear": "2025/2026",
+    "dateOfBirth": "",
+    "studentNumber": "20250001",
+    "faculty": "Science",
+    "issuer": "Registrar",
+    "issueDate": "2025-11-26",
+    "referenceNumber": "748544",
     "courses": [
       "CS 401 Software Engineering",
       "CS 402 Algorithms",
       "CS 415 Database Systems"
     ],
     "hasVerificationUrl": false,
-    "hasDigitalSignature": false
+    "hasDigitalSignature": false,
+    "hasSignatureMarker": true
   }
 }

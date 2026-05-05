@@ -19,6 +19,10 @@ EMAIL_PATTERN = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNO
 GPA_PATTERN = re.compile(r"\bGPA\b[:\s]*([0-4](?:\.\d{1,2})?)", re.IGNORECASE)
 COURSE_PATTERN = re.compile(r"\b[A-Z]{2,}\s*[-/]?\s*\d{2,3}[A-Z]?\b")
 SEMESTER_PATTERN = re.compile(r"\b(Spring|Summer|Fall|Winter|Autumn)\s+20\d{2}\b|\b20\d{2}\s+(Spring|Summer|Fall|Winter|Autumn)\b", re.IGNORECASE)
+ACADEMIC_YEAR_PATTERN = re.compile(r"\b20\d{2}\s*[/\-]\s*20\d{2}\b|\b(Spring|Summer|Fall|Winter|Autumn)\s+20\d{2}\s*[/\-]\s*20\d{2}\b", re.IGNORECASE)
+DATE_OF_BIRTH_PATTERN = re.compile(r"\b\d{1,2}[-/ ](?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)[A-Z]*[-/ ]\d{2,4}\b", re.IGNORECASE)
+STUDENT_NUMBER_PATTERN = re.compile(r"\b20\d{6,}\b|\b\d{7,10}\b")
+ISSUE_DATE_PATTERN = re.compile(r"\b\d{1,2}[-/ ](?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)[A-Z]*[-/ ]\d{2,4}\b", re.IGNORECASE)
 TRANSCRIPT_KEYWORDS = (
     "transcript",
     "transcript of records",
@@ -35,6 +39,10 @@ TRANSCRIPT_KEYWORDS = (
     "student affairs",
     "attestation",
     "certificate",
+    "academic year",
+    "student no",
+    "issued upon his request",
+    "not official unless signed",
 )
 DEGREE_HINTS = ("bachelor", "master", "b.sc", "bsc", "bs ", "mba", "phd")
 MAJOR_HINTS = (
@@ -65,15 +73,24 @@ class LocalTranscriptExtractor:
             fileName=payload.fileName or file_path.name,
             mimeType=mime_type,
             documentLooksLikeTranscript=fields["documentLooksLikeTranscript"],
+            documentType=fields["documentType"],
             studentName=fields["studentName"],
             university=fields["university"],
             degree=fields["degree"],
             major=fields["major"],
             gpa=fields["gpa"],
             lastSemester=fields["lastSemester"],
+            academicYear=fields["academicYear"],
+            dateOfBirth=fields["dateOfBirth"],
+            studentNumber=fields["studentNumber"],
+            faculty=fields["faculty"],
+            issuer=fields["issuer"],
+            issueDate=fields["issueDate"],
+            referenceNumber=fields["referenceNumber"],
             courses=fields["courses"],
             hasVerificationUrl=fields["hasVerificationUrl"],
             hasDigitalSignature=_has_pdf_signature(file_path) if mime_type == "application/pdf" else False,
+            hasSignatureMarker=fields["hasSignatureMarker"],
         )
 
 
@@ -122,15 +139,23 @@ def _ocr_bytes(image_bytes: bytes) -> str:
     default_path = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
     if default_path.exists():
         pytesseract.pytesseract.tesseract_cmd = str(default_path)
-    image = Image.open(BytesIO(image_bytes))
-    image = ImageOps.grayscale(image)
-    image = ImageOps.autocontrast(image)
-    image = image.filter(ImageFilter.SHARPEN)
-    return pytesseract.image_to_string(
-        image,
-        lang="eng+ara",
-        config="--oem 3 --psm 6",
-    ).strip()
+    base_image = Image.open(BytesIO(image_bytes))
+    candidates: list[str] = []
+    for angle in (0, 90, 270):
+        image = base_image.rotate(angle, expand=True) if angle else base_image.copy()
+        image = ImageOps.grayscale(image)
+        image = ImageOps.autocontrast(image)
+        image = image.filter(ImageFilter.SHARPEN)
+        text = pytesseract.image_to_string(
+            image,
+            lang="eng+ara",
+            config="--oem 3 --psm 6",
+        ).strip()
+        if text:
+            candidates.append(text)
+    if not candidates:
+        return ""
+    return max(candidates, key=lambda value: len(_normalize_whitespace(value)))
 
 
 def _extract_transcript_fields(text: str) -> dict:
@@ -146,6 +171,7 @@ def _extract_transcript_fields(text: str) -> dict:
         or "certifies that" in lower_text
         or "attending classes regularly" in lower_text
     )
+    document_type = _detect_document_type(lower_text)
 
     student_name = _extract_student_name(lines)
     university = _extract_university(lines)
@@ -153,19 +179,36 @@ def _extract_transcript_fields(text: str) -> dict:
     major = next((hint.title() for hint in MAJOR_HINTS if hint in lower_text), "")
     gpa = _extract_gpa(lines)
     last_semester = _extract_last_semester(normalized_text)
+    academic_year = _extract_academic_year(normalized_text)
+    date_of_birth = _extract_date_of_birth(lines)
+    student_number = _extract_student_number(lines)
+    faculty = _extract_faculty(lines)
+    issuer = _extract_issuer(lines)
+    issue_date = _extract_issue_date(lines)
+    reference_number = _extract_reference_number(lines)
     courses = _extract_courses(lines)
     has_verification_url = any(_looks_like_verification_url(url) for url in URL_PATTERN.findall(text))
+    has_signature_marker = _has_signature_marker(lower_text, lines)
 
     return {
-        "documentLooksLikeTranscript": document_looks_like_transcript,
+        "documentLooksLikeTranscript": document_looks_like_transcript or document_type in {"attestation", "certificate"},
+        "documentType": document_type,
         "studentName": student_name,
         "university": university,
         "degree": degree,
         "major": major,
         "gpa": gpa,
         "lastSemester": last_semester,
+        "academicYear": academic_year,
+        "dateOfBirth": date_of_birth,
+        "studentNumber": student_number,
+        "faculty": faculty,
+        "issuer": issuer,
+        "issueDate": issue_date,
+        "referenceNumber": reference_number,
         "courses": courses,
         "hasVerificationUrl": has_verification_url,
+        "hasSignatureMarker": has_signature_marker,
     }
 
 
@@ -211,6 +254,11 @@ def _extract_last_semester(text: str) -> str:
     return match.group(0).strip() if match else ""
 
 
+def _extract_academic_year(text: str) -> str:
+    match = ACADEMIC_YEAR_PATTERN.search(text)
+    return match.group(0).strip() if match else ""
+
+
 def _extract_courses(lines: list[str]) -> list[str]:
     courses: list[str] = []
     seen: set[str] = set()
@@ -222,6 +270,78 @@ def _extract_courses(lines: list[str]) -> list[str]:
                 seen.add(normalized)
                 courses.append(cleaned)
     return courses[:20]
+
+
+def _extract_date_of_birth(lines: list[str]) -> str:
+    for line in lines:
+        lowered = line.lower()
+        if "year of birth" in lowered or "born in" in lowered or "date of birth" in lowered:
+            match = DATE_OF_BIRTH_PATTERN.search(line)
+            if match:
+                return match.group(0).strip()
+    for line in lines[:20]:
+        match = DATE_OF_BIRTH_PATTERN.search(line)
+        if match:
+            return match.group(0).strip()
+    return ""
+
+
+def _extract_student_number(lines: list[str]) -> str:
+    for line in lines:
+        lowered = line.lower()
+        if "student no" in lowered or "student number" in lowered or "رقم الطالب" in line:
+            match = STUDENT_NUMBER_PATTERN.search(line)
+            if match:
+                return match.group(0).strip()
+    return ""
+
+
+def _extract_faculty(lines: list[str]) -> str:
+    for line in lines:
+        lowered = line.lower()
+        if lowered.startswith("registered at the faculty of") or lowered.startswith("faculty") or "كلية" in line:
+            return line.split(":", 1)[-1].strip() if ":" in line else line.strip()
+    return ""
+
+
+def _extract_issuer(lines: list[str]) -> str:
+    for line in lines:
+        lowered = line.lower()
+        if "student affairs" in lowered:
+            return "Student Affairs"
+        if "registrar" in lowered:
+            return line.strip()
+    return ""
+
+
+def _extract_issue_date(lines: list[str]) -> str:
+    for line in reversed(lines[-20:]):
+        match = ISSUE_DATE_PATTERN.search(line)
+        if match:
+            return match.group(0).strip()
+    return ""
+
+
+def _extract_reference_number(lines: list[str]) -> str:
+    numeric_lines = [line.strip() for line in lines if re.fullmatch(r"\d{5,10}", line.strip())]
+    return numeric_lines[-1] if numeric_lines else ""
+
+
+def _has_signature_marker(lower_text: str, lines: list[str]) -> bool:
+    if "signed and sealed" in lower_text or "student affairs" in lower_text:
+        return True
+    return any(
+        any(token in line.lower() for token in ("student affairs", "registrar", "dean"))
+        for line in lines
+    )
+
+
+def _detect_document_type(lower_text: str) -> str:
+    if "attestation" in lower_text or "certificate" in lower_text or "certifies that" in lower_text:
+        return "attestation"
+    if "transcript" in lower_text or "transcript of records" in lower_text:
+        return "transcript"
+    return ""
 
 
 def _looks_like_verification_url(url: str) -> bool:

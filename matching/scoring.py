@@ -6,7 +6,35 @@ from typing import List, Sequence, Tuple
 from .models import Experience, Job, StudentProfile
 
 
-WORD_RE = re.compile(r"[A-Za-z0-9]+")
+WORD_RE = re.compile(r"[A-Za-z0-9+#.]+")
+
+SKILL_SYNONYMS = {
+    "js": "javascript",
+    "javascript": "javascript",
+    "ts": "typescript",
+    "typescript": "typescript",
+    "reactjs": "react",
+    "react.js": "react",
+    "react": "react",
+    "reactnative": "react native",
+    "react-native": "react native",
+    "node": "node.js",
+    "nodejs": "node.js",
+    "node.js": "node.js",
+    "expressjs": "express",
+    "express.js": "express",
+    "sql": "sql",
+    "mysql": "sql",
+    "postgresql": "sql",
+    "postgres": "sql",
+    "mssql": "sql",
+    "html5": "html",
+    "css3": "css",
+    "uiux": "ui ux",
+    "ui/ux": "ui ux",
+    "problem solving": "problem solving",
+    "communication skills": "communication",
+}
 
 CATEGORY_ALIASES = {
     "it": {
@@ -42,7 +70,11 @@ def _tokenize(text: str) -> List[str]:
 def _normalize_skill(text: str) -> str:
     cleaned = text.strip()
     cleaned = re.sub(r"\s*\d+(\.\d+)*\b", "", cleaned)
-    return cleaned.strip(" ,;:/")
+    cleaned = cleaned.strip(" ,;:/")
+    key = re.sub(r"[^a-z0-9+#.]+", " ", cleaned.lower()).strip()
+    if not key:
+        return ""
+    return SKILL_SYNONYMS.get(key, key)
 
 
 def _normalize_requirements(requirements: Sequence[str] | str) -> List[str]:
@@ -65,12 +97,40 @@ def _normalize_requirements(requirements: Sequence[str] | str) -> List[str]:
     return result
 
 
+def _tokens_match(left: str, right: str) -> bool:
+    left_tokens = set(_tokenize(left))
+    right_tokens = set(_tokenize(right))
+    if not left_tokens or not right_tokens:
+        return False
+    return left_tokens.issubset(right_tokens) or right_tokens.issubset(left_tokens)
+
+
 def _skill_overlap(student_skills: Sequence[str], job_requirements: Sequence[str]) -> float:
     if not job_requirements:
         return 0.0
-    student_set = {_normalize(skill) for skill in student_skills if skill.strip()}
-    job_set = {_normalize(req) for req in job_requirements if req.strip()}
-    return len(student_set.intersection(job_set)) / max(1, len(job_set))
+    normalized_student_skills = [
+        _normalize_skill(skill) for skill in student_skills if str(skill).strip()
+    ]
+    normalized_student_skills = [skill for skill in normalized_student_skills if skill]
+    normalized_requirements = [
+        _normalize_skill(req) for req in job_requirements if str(req).strip()
+    ]
+    normalized_requirements = [req for req in normalized_requirements if req]
+    if not normalized_requirements:
+        return 0.0
+
+    matched = 0
+    for requirement in normalized_requirements:
+        if any(
+            skill == requirement
+            or skill in requirement
+            or requirement in skill
+            or _tokens_match(skill, requirement)
+            for skill in normalized_student_skills
+        ):
+            matched += 1
+
+    return matched / max(1, len(normalized_requirements))
 
 
 def _major_matches_category(major: str, category: str) -> bool:
@@ -83,12 +143,12 @@ def _major_matches_category(major: str, category: str) -> bool:
     aliases = CATEGORY_ALIASES.get(category_value, set())
     if major_value in aliases:
         return True
-    return any(alias in major_value for alias in aliases)
+    return any(alias in major_value or major_value in alias for alias in aliases)
 
 
 def _location_score(student: StudentProfile, job: Job) -> float:
     if _normalize(job.type) == "remote":
-        return 0.3
+        return 0.35
 
     student_city = _normalize(student.location.city)
     student_country = _normalize(student.location.country)
@@ -103,7 +163,7 @@ def _location_score(student: StudentProfile, job: Job) -> float:
     if student_city and student_city == job_city:
         return 1.0
     if student_country and student_country == job_country:
-        return 0.5
+        return 0.55
     return 0.0
 
 
@@ -118,11 +178,15 @@ def _keyword_overlap(text_a: str, text_b: str) -> float:
 def _experience_relevance(experiences: Sequence[Experience], job: Job) -> float:
     if not experiences:
         return 0.0
-    job_context = f"{job.title} {job.description} {' '.join(job.requirements)}"
-    return max(
-        _keyword_overlap(f"{experience.title} {experience.description}", job_context)
+    job_context = f"{job.title} {job.description} {' '.join(job.requirements)} {job.category}"
+    relevance = max(
+        _keyword_overlap(
+            f"{experience.title} {experience.company} {experience.description}",
+            job_context,
+        )
         for experience in experiences
     )
+    return relevance if relevance >= 0.12 else 0.0
 
 
 def score_job_match(student: StudentProfile, job: Job) -> Tuple[int, List[str]]:
@@ -142,13 +206,7 @@ def score_job_match(student: StudentProfile, job: Job) -> Tuple[int, List[str]]:
 
     reasons: List[str] = []
     if requirements:
-        matched = len(
-            {
-                _normalize(skill)
-                for skill in student.skills
-                if _normalize(skill) in {_normalize(req) for req in requirements}
-            }
-        )
+        matched = round(skill_overlap * len(requirements))
         reasons.append(f"{matched}/{len(requirements)} skills match")
     if major_match:
         reasons.append("Major aligned")

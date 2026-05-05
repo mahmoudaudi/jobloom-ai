@@ -31,6 +31,18 @@ def _matches(expected: str, actual: str, threshold: float = 0.78) -> bool:
     return _similarity(expected, actual) >= threshold
 
 
+def _year_matches(expected: str, actual: str) -> bool:
+    expected_norm = _normalize(expected)
+    actual_norm = _normalize(actual)
+    if not expected_norm or not actual_norm:
+        return False
+    if expected_norm == actual_norm:
+        return True
+    expected_digits = re.findall(r"20\d{2}", expected)
+    actual_digits = re.findall(r"20\d{2}", actual)
+    return bool(expected_digits and actual_digits and expected_digits == actual_digits)
+
+
 def _has_supported_file_type(document: TranscriptDocument) -> bool:
     mime_type = _normalize(document.mimeType or "")
     if mime_type in SUPPORTED_MIME_TYPES:
@@ -47,28 +59,47 @@ def verify_transcript(
     name_matches = True if not expected.fullName or not document.studentName else _matches(expected.fullName, document.studentName)
     university_matches = _matches(expected.university, document.university, threshold=0.72)
     major_matches = True if not expected.major or not document.major else _matches(expected.major, document.major, threshold=0.72)
+    date_of_birth_matches = True if not expected.dateOfBirth or not document.dateOfBirth else _matches(expected.dateOfBirth, document.dateOfBirth, threshold=0.72)
+    academic_year_matches = True if not expected.academicYear or not document.academicYear else _year_matches(expected.academicYear, document.academicYear)
     records_present = bool(document.gpa is not None or document.courses)
     recent_activity_present = bool(document.lastSemester.strip())
+    identity_present = bool(document.studentNumber.strip() or document.dateOfBirth.strip())
+    issuer_present = bool(document.issuer.strip())
+    issue_date_present = bool(document.issueDate.strip())
+    reference_number_present = bool(document.referenceNumber.strip())
+    faculty_present = bool(document.faculty.strip())
+    signature_present = document.hasSignatureMarker or document.hasDigitalSignature
     strong_proof_present = document.hasVerificationUrl or document.hasDigitalSignature
+    document_type_supported = document.documentType in {"transcript", "attestation", "certificate"} if document.documentType else document.documentLooksLikeTranscript
 
     checks = {
         "supportedFileType": supported_file_type,
         "documentLooksLikeTranscript": document.documentLooksLikeTranscript,
+        "documentTypeSupported": document_type_supported,
         "nameMatchesExpected": name_matches,
         "universityMatchesExpected": university_matches,
         "majorMatchesExpected": major_matches,
+        "dateOfBirthMatchesExpected": date_of_birth_matches,
+        "academicYearMatchesExpected": academic_year_matches,
         "recordsPresent": records_present,
         "recentAcademicActivity": recent_activity_present,
+        "identitySignalPresent": identity_present,
+        "facultyPresent": faculty_present,
+        "issuerPresent": issuer_present,
+        "issueDatePresent": issue_date_present,
+        "referenceNumberPresent": reference_number_present,
+        "signaturePresent": signature_present,
         "strongProofPresent": strong_proof_present,
     }
 
     required_checks = {
         "supportedFileType": supported_file_type,
         "documentLooksLikeTranscript": document.documentLooksLikeTranscript,
+        "documentTypeSupported": document_type_supported,
         "nameMatchesExpected": name_matches,
         "universityMatchesExpected": university_matches,
         "majorMatchesExpected": major_matches,
-        "recordsPresent": records_present,
+        "identitySignalPresent": identity_present,
     }
 
     issues = [label for label, passed in checks.items() if not passed]
@@ -86,11 +117,19 @@ def verify_transcript(
         ),
         extracted={
             "studentName": document.studentName,
+            "documentType": document.documentType,
             "university": document.university,
             "degree": document.degree,
             "major": document.major,
             "gpa": document.gpa,
             "lastSemester": document.lastSemester,
+            "academicYear": document.academicYear,
+            "dateOfBirth": document.dateOfBirth,
+            "studentNumber": document.studentNumber,
+            "faculty": document.faculty,
+            "issuer": document.issuer,
+            "issueDate": document.issueDate,
+            "referenceNumber": document.referenceNumber,
             "courses": document.courses,
             "filePath": document.filePath,
             "fileUrl": document.fileUrl,
@@ -100,4 +139,3 @@ def verify_transcript(
         checks=checks,
         issues=issues,
     )
-

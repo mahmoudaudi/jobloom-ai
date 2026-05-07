@@ -54,7 +54,8 @@ Postman:
 - `POST /ai/rank-jobs`
 - `POST /ai/rank-students`
 
-For quick testing in `mock` mode, you can send an empty body to `POST /ai/parse-cv`, `POST /ai/verify-transcript`, `POST /ai/rank-jobs`, or `POST /ai/rank-students` and it will use mock data automatically.
+For quick testing, send `"useMockData": true` to `POST /ai/verify-transcript`, `POST /ai/rank-jobs`, or `POST /ai/rank-students`.
+If `JOBLOOM_AI_DATA_SOURCE=mock`, omitted payload data also falls back to mock data automatically.
 That mock data is copied from `Jobloom mobile`, but the ranking is always calculated by the scoring engine.
 
 `/ai/parse-cv` accepts a CV file reference and returns structured personal data, education fields, cleaned skills, experience entries, confidence scores, and optional raw text.

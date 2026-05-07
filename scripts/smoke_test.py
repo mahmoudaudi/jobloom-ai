@@ -22,7 +22,7 @@ def main() -> None:
     assert_true(health.status_code == 200, "health endpoint failed")
     assert_true(health.json() == {"ok": True}, "health response shape changed")
 
-    rank_jobs = client.post("/ai/rank-jobs", json={})
+    rank_jobs = client.post("/ai/rank-jobs", json={"useMockData": True})
     rank_jobs_body = rank_jobs.json()
     assert_true(rank_jobs.status_code == 200, "rank-jobs endpoint failed")
     assert_true(rank_jobs_body.get("success") is True, "rank-jobs success flag missing")
@@ -32,7 +32,7 @@ def main() -> None:
         "rank-jobs row shape changed",
     )
 
-    rank_students = client.post("/ai/rank-students", json={})
+    rank_students = client.post("/ai/rank-students", json={"useMockData": True})
     rank_students_body = rank_students.json()
     assert_true(rank_students.status_code == 200, "rank-students endpoint failed")
     assert_true(rank_students_body.get("success") is True, "rank-students success flag missing")
@@ -42,7 +42,7 @@ def main() -> None:
         "rank-students row shape changed",
     )
 
-    verify_transcript = client.post("/ai/verify-transcript", json={})
+    verify_transcript = client.post("/ai/verify-transcript", json={"useMockData": True})
     verify_transcript_body = verify_transcript.json()
     assert_true(verify_transcript.status_code == 200, "verify-transcript endpoint failed")
     assert_true(

@@ -46,6 +46,11 @@ def _env_path(name: str, default: str) -> str:
     return value if value.startswith("/") else f"/{value}"
 
 
+def _env_csv(name: str, default: str = "") -> tuple[str, ...]:
+    value = os.getenv(name, default)
+    return tuple(item.strip() for item in value.split(",") if item.strip())
+
+
 @dataclass(frozen=True)
 class Settings:
     host: str
@@ -66,6 +71,10 @@ class Settings:
     llm_timeout_seconds: int
     llm_temperature: float
     llm_max_output_tokens: int
+    allowed_file_hosts: tuple[str, ...]
+    allow_local_file_urls: bool
+    allowed_file_roots: tuple[Path, ...]
+    max_remote_file_bytes: int
 
     @property
     def use_mock_data_by_default(self) -> bool:
@@ -102,6 +111,16 @@ settings = Settings(
     llm_timeout_seconds=max(_env_int("JOBLOOM_AI_LLM_TIMEOUT_SECONDS", 3), 10),
     llm_temperature=float(os.getenv("JOBLOOM_AI_LLM_TEMPERATURE", "0.2")),
     llm_max_output_tokens=_env_int("JOBLOOM_AI_LLM_MAX_OUTPUT_TOKENS", 512),
+    allowed_file_hosts=_env_csv(
+        "JOBLOOM_AI_ALLOWED_FILE_HOSTS",
+        "jobloom-backend-service-b8axewhvcyafhtf2.swedencentral-01.azurewebsites.net",
+    ),
+    allow_local_file_urls=_env_bool("JOBLOOM_AI_ALLOW_LOCAL_FILE_URLS", False),
+    allowed_file_roots=tuple(
+        Path(value).expanduser().resolve()
+        for value in _env_csv("JOBLOOM_AI_ALLOWED_FILE_ROOTS", str(Path.cwd()))
+    ),
+    max_remote_file_bytes=_env_int("JOBLOOM_AI_MAX_REMOTE_FILE_BYTES", 10 * 1024 * 1024),
 )
 
 

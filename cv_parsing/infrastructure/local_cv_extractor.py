@@ -7,6 +7,7 @@ from pathlib import Path
 import fitz
 import pytesseract
 from PIL import Image
+from api_server.remote_files import resolve_local_or_remote_path
 from api_server.text_cleaning import clean_extracted_text
 
 from cv_parsing.application.dtos import ParseCvRequest
@@ -105,12 +106,10 @@ class LocalCvExtractor:
 
 
 def _resolve_file_path(source: str) -> Path:
-    path = Path(source)
-    if not path.is_absolute():
-        path = Path.cwd() / source.lstrip("/\\")
-    if not path.exists() or not path.is_file():
-        raise ValueError(f"cv file not found: {path}")
-    return path
+    try:
+        return resolve_local_or_remote_path(source, prefix="jobloom-cv-")
+    except ValueError as exc:
+        raise ValueError(f"cv file not found: {source}") from exc
 
 
 def _extract_document_text(file_path: Path) -> str:

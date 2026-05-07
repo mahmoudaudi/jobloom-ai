@@ -5,6 +5,7 @@ import re
 from io import BytesIO
 from pathlib import Path
 
+from api_server.remote_files import resolve_local_or_remote_path
 from api_server.text_cleaning import clean_extracted_text
 from transcript_verification.application.dtos import TranscriptDocumentPayload
 
@@ -394,12 +395,10 @@ def _resolve_file_path(payload: TranscriptDocumentPayload) -> Path:
     source = payload.filePath or payload.fileUrl
     if not source:
         raise ValueError("transcript filePath or fileUrl is required for extraction")
-    path = Path(source)
-    if not path.is_absolute():
-        path = Path.cwd() / source.lstrip("/\\")
-    if not path.exists() or not path.is_file():
-        raise ValueError(f"transcript file not found: {path}")
-    return path
+    try:
+        return resolve_local_or_remote_path(source, prefix="jobloom-transcript-")
+    except ValueError as exc:
+        raise ValueError(f"transcript file not found: {source}") from exc
 
 
 def _detect_mime_type(payload: TranscriptDocumentPayload, file_path: Path) -> str:

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from api_server.remote_files import resolve_local_or_remote_path
 from api_server.settings import settings
 from cv_parsing.application.dtos import ParseCvRequest
 from cv_parsing.domain.models import (
@@ -357,12 +358,10 @@ def _collect_text_values(obj: Any) -> list[str]:
 
 
 def _resolve_file_path(source: str) -> Path:
-    path = Path(source)
-    if not path.is_absolute():
-        path = Path.cwd() / source.lstrip("/\\")
-    if not path.exists() or not path.is_file():
-        raise ValueError(f"cv file not found: {path}")
-    return path
+    try:
+        return resolve_local_or_remote_path(source, prefix="jobloom-cv-")
+    except ValueError as exc:
+        raise ValueError(f"cv file not found: {source}") from exc
 
 
 def _detect_mime_type(payload: ParseCvRequest, file_path: Path) -> str:
